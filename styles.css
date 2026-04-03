@@ -1,0 +1,251 @@
+#gemini-timeline-sidebar {
+  position: fixed;
+  top: 64px; /* 避开网页顶部导航栏 */
+  right: 0;
+  width: 300px;
+  height: calc(100vh - 64px);
+  background-color: #f8f9fa;
+  border-left: 1px solid #dadce0;
+  z-index: 99999; /* 保证层级最高 */
+  font-family: 'Google Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease;
+}
+
+#gemini-timeline-sidebar.hidden {
+  transform: translateX(100%);
+}
+
+/* 悬浮展开按钮 */
+#gemini-timeline-floating-btn {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  background-color: #ffffff;
+  border: 1px solid #dadce0;
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  padding: 12px 8px;
+  cursor: pointer;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  z-index: 99999;
+  font-size: 20px;
+  display: none; /* 默认隐藏，侧边栏收起时显示 */
+  transition: background-color 0.2s;
+}
+
+#gemini-timeline-floating-btn:hover {
+  background-color: #f1f3f4;
+}
+
+.timeline-header {
+  padding: 16px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #dadce0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.timeline-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timeline-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #202124;
+  font-weight: 500;
+}
+
+/* 搜索框样式 */
+.timeline-search-row {
+  width: 100%;
+}
+
+.timeline-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  font-size: 13px;
+  border: 1px solid #dadce0;
+  border-radius: 18px;
+  outline: none;
+  background-color: #f1f3f4;
+  color: #3c4043;
+  transition: all 0.2s ease;
+}
+
+.timeline-search-input:focus {
+  background-color: #ffffff;
+  border-color: #1a73e8;
+  box-shadow: 0 1px 4px rgba(26, 115, 232, 0.2);
+}
+
+.timeline-search-input::placeholder {
+  color: #80868b;
+}
+
+.timeline-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.timeline-theme-btn,
+.timeline-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #5f6368;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.timeline-theme-btn:hover,
+.timeline-toggle-btn:hover {
+  background-color: #f1f3f4;
+  color: #202124;
+}
+
+.timeline-content {
+  padding: 16px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.timeline-item {
+  padding: 12px;
+  margin-bottom: 12px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e8eaed;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.timeline-item:hover {
+  background-color: #f1f3f4;
+  border-color: #dadce0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.timeline-item-text {
+  font-size: 14px;
+  color: #3c4043;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* 修改为2行 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre-wrap; /* 允许换行符正常显示 */
+}
+
+/* 移除时间显示相关的样式（如果有其他地方用到可以保留，但目前已删除 DOM）*/
+.timeline-item-time {
+  display: none;
+}
+
+/* 适配暗黑模式 (支持系统媒体查询以及强制切换的类名) */
+@media (prefers-color-scheme: dark) {
+  #gemini-timeline-sidebar:not(.force-light) {
+    background-color: #1e1f20;
+    border-left-color: #444746;
+  }
+  #gemini-timeline-sidebar:not(.force-light) .timeline-header {
+    background-color: #1e1f20;
+    border-bottom-color: #444746;
+  }
+  #gemini-timeline-sidebar:not(.force-light) .timeline-header h3 {
+    color: #e3e3e3;
+  }
+  #gemini-timeline-sidebar:not(.force-light) .timeline-search-input {
+    background-color: #303134;
+    border-color: #5f6368;
+    color: #e3e3e3;
+  }
+  #gemini-timeline-sidebar:not(.force-light) .timeline-search-input:focus {
+    background-color: #202124;
+    border-color: #8ab4f8;
+  }
+  #gemini-timeline-sidebar:not(.force-light) .timeline-search-input::placeholder {
+    color: #9aa0a6;
+  }
+  #gemini-timeline-sidebar:not(.force-light) .timeline-item {
+    background-color: #282a2c;
+    border-color: #444746;
+  }
+  #gemini-timeline-sidebar:not(.force-light) .timeline-item:hover {
+    background-color: #303134;
+    border-color: #5f6368;
+  }
+  #gemini-timeline-sidebar:not(.force-light) .timeline-item-text {
+    color: #e3e3e3;
+  }
+  #gemini-timeline-sidebar:not(.force-light) .timeline-theme-btn:hover,
+  #gemini-timeline-sidebar:not(.force-light) .timeline-toggle-btn:hover {
+    background-color: #303134;
+    color: #e3e3e3;
+  }
+}
+
+/* 强制暗黑模式类名 */
+#gemini-timeline-sidebar.force-dark {
+  background-color: #1e1f20;
+  border-left-color: #444746;
+}
+#gemini-timeline-sidebar.force-dark .timeline-header {
+  background-color: #1e1f20;
+  border-bottom-color: #444746;
+}
+#gemini-timeline-sidebar.force-dark .timeline-header h3 {
+  color: #e3e3e3;
+}
+#gemini-timeline-sidebar.force-dark .timeline-search-input {
+  background-color: #303134;
+  border-color: #5f6368;
+  color: #e3e3e3;
+}
+#gemini-timeline-sidebar.force-dark .timeline-search-input:focus {
+  background-color: #202124;
+  border-color: #8ab4f8;
+}
+#gemini-timeline-sidebar.force-dark .timeline-search-input::placeholder {
+  color: #9aa0a6;
+}
+#gemini-timeline-sidebar.force-dark .timeline-item {
+  background-color: #282a2c;
+  border-color: #444746;
+}
+#gemini-timeline-sidebar.force-dark .timeline-item:hover {
+  background-color: #303134;
+  border-color: #5f6368;
+}
+#gemini-timeline-sidebar.force-dark .timeline-item-text {
+  color: #e3e3e3;
+}
+#gemini-timeline-sidebar.force-dark .timeline-theme-btn:hover,
+#gemini-timeline-sidebar.force-dark .timeline-toggle-btn:hover {
+  background-color: #303134;
+  color: #e3e3e3;
+}
+
+/* 悬浮按钮强制暗黑样式 */
+@media (prefers-color-scheme: dark) {
+  #gemini-timeline-floating-btn {
+    background-color: #1e1f20;
+    border-color: #444746;
+    color: #e3e3e3;
+  }
+  #gemini-timeline-floating-btn:hover {
+    background-color: #303134;
+  }
+}

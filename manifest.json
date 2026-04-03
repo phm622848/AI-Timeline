@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "AI Timeline",
+  "version": "1.0.0",
+  "description": "在网页版AI侧边栏生成用户提问的时间轴，方便快速跳转。",
+  "permissions": ["scripting"],
+  "host_permissions": ["https://gemini.google.com/*", "https://chatgpt.com/*", "https://chat.deepseek.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://gemini.google.com/*", "https://chatgpt.com/*", "https://chat.deepseek.com/*"],
+      "css": ["styles.css"],
+      "js": ["gemini.js", "gpt.js", "deepseek.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "AI Timeline"
+  }
+}
