@@ -1,0 +1,209 @@
+/* timeline-v2.css */
+/* 极简主义、自动化、基于悬停展开的 AI Timeline 样式 */
+
+:root {
+  /* Light Mode Variables */
+  --tl-bg: #ffffff;
+  --tl-border: #e0e0e0;
+  --tl-text-default: #80868b;
+  --tl-text-hover: #202124;
+  --tl-text-active: #1a73e8;
+  --tl-line-default: #dadce0;
+  --tl-line-hover: #202124;
+  --tl-line-active: #1a73e8;
+  --tl-tooltip-bg: #202124;
+  --tl-tooltip-text: #ffffff;
+  --tl-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --tl-highlight-bg: rgba(26, 115, 232, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark Mode Variables */
+    --tl-bg: #202124;
+    --tl-border: #3c4043;
+    --tl-text-default: #9aa0a6;
+    --tl-text-hover: #e8eaed;
+    --tl-text-active: #8ab4f8;
+    --tl-line-default: #5f6368;
+    --tl-line-hover: #e8eaed;
+    --tl-line-active: #8ab4f8;
+    --tl-tooltip-bg: #e8eaed;
+    --tl-tooltip-text: #202124;
+    --tl-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --tl-highlight-bg: rgba(138, 180, 248, 0.15);
+  }
+}
+
+/* 侧边栏主容器 */
+#ai-timeline-v2-container {
+  position: fixed;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  background-color: var(--tl-bg);
+  border: 1px solid var(--tl-border);
+  border-radius: 16px;
+  padding: 16px 0;
+  box-shadow: var(--tl-shadow);
+  z-index: 999999;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  /* 初始极简状态（只显示横线） */
+  width: 40px;
+  max-height: 80vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* 悬停展开动画 */
+  transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+  /* 隐藏滚动条但保留滚动功能 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+#ai-timeline-v2-container::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
+}
+
+/* 悬停时展开变宽，显示文字 */
+#ai-timeline-v2-container:hover {
+  width: 280px;
+  padding: 16px 12px;
+}
+
+/* 列表容器 */
+#ai-timeline-v2-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 单个时间轴项目 */
+.timeline-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* 靠右对齐横线 */
+  height: 28px;
+  cursor: pointer;
+  padding: 0 12px;
+  transition: all 0.2s ease;
+}
+
+/* 横线 (Dash) */
+.timeline-item-dash {
+  width: 12px;
+  height: 2px;
+  background-color: var(--tl-line-default);
+  border-radius: 2px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+/* 文字标签 */
+.timeline-item-text {
+  position: absolute;
+  left: 12px;
+  right: 32px; /* 给右侧横线留空间 */
+  font-size: 14px;
+  color: var(--tl-text-default);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0; /* 默认隐藏 */
+  transition:
+    opacity 0.2s ease,
+    color 0.2s ease;
+  pointer-events: none; /* 防止遮挡悬停事件 */
+}
+
+/* 容器展开时显示文字 */
+#ai-timeline-v2-container:hover .timeline-item-text {
+  opacity: 1;
+}
+
+/* 状态：Hover 悬停某一项 */
+.timeline-item:hover .timeline-item-dash {
+  background-color: var(--tl-line-hover);
+  width: 16px; /* 悬停时稍微变长 */
+}
+
+.timeline-item:hover .timeline-item-text {
+  color: var(--tl-text-hover);
+}
+
+/* 状态：Active 激活项 (当前滚动位置) */
+.timeline-item.active .timeline-item-dash {
+  background-color: var(--tl-line-active);
+  width: 16px;
+  height: 3px; /* 激活项横线更粗 */
+}
+
+.timeline-item.active .timeline-item-text {
+  color: var(--tl-text-active);
+  font-weight: 500;
+}
+
+/* --- Tooltip 气泡提示 (图3效果) --- */
+.timeline-tooltip {
+  position: fixed;
+  background-color: var(--tl-tooltip-bg);
+  color: var(--tl-tooltip-text);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 320px;
+  word-wrap: break-word;
+  z-index: 1000000;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  transform: translateX(-10px);
+  box-shadow: var(--tl-shadow);
+
+  /* 气泡小箭头 */
+}
+
+.timeline-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -6px;
+  transform: translateY(-50%);
+  border-width: 6px 0 6px 6px;
+  border-style: solid;
+  border-color: transparent transparent transparent var(--tl-tooltip-bg);
+}
+
+.timeline-tooltip.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+/* 网页正文高亮动画 */
+@keyframes timeline-highlight-pulse {
+  0% {
+    background-color: transparent;
+  }
+  30% {
+    background-color: var(--tl-highlight-bg);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.timeline-highlight {
+  animation: timeline-highlight-pulse 2s ease-out;
+  border-radius: 4px;
+}

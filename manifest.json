@@ -4,12 +4,22 @@
   "version": "1.0.0",
   "description": "在网页版AI侧边栏生成用户提问的时间轴，方便快速跳转。",
   "permissions": ["scripting"],
-  "host_permissions": ["https://gemini.google.com/*", "https://chatgpt.com/*", "https://chat.deepseek.com/*"],
+  "host_permissions": [
+    "https://gemini.google.com/*",
+    "https://chatgpt.com/*",
+    "https://chat.deepseek.com/*",
+    "https://*.doubao.com/*"
+  ],
   "content_scripts": [
     {
-      "matches": ["https://gemini.google.com/*", "https://chatgpt.com/*", "https://chat.deepseek.com/*"],
-      "css": ["styles.css"],
-      "js": ["gemini.js", "gpt.js", "deepseek.js", "content.js"],
+      "matches": [
+        "https://gemini.google.com/*",
+        "https://chatgpt.com/*",
+        "https://chat.deepseek.com/*",
+        "https://*.doubao.com/*"
+      ],
+      "css": ["timeline-v2.css"],
+      "js": ["gemini.js", "gpt.js", "deepseek.js", "doubao.js", "timeline-v2.js"],
       "run_at": "document_idle"
     }
   ],
