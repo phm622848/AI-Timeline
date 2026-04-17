@@ -19,7 +19,7 @@
         "https://*.doubao.com/*"
       ],
       "css": ["timeline-v2.css"],
-      "js": ["gemini.js", "gpt.js", "deepseek.js", "doubao.js", "timeline-v2.js"],
+      "js": ["gemini.js", "gpt.js", "doubao.js", "timeline-v2.js"],
       "run_at": "document_idle"
     }
   ],

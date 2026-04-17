@@ -11,50 +11,59 @@ const DoubaoAdapter = {
     let foundElements = []
 
     // 豆包网页版的用户消息特征：
-    // 用户消息通常没有 flow-markdown-body 和 theme-samantha-uDexJL 等 markdown 渲染的类名
-    // 用户消息通常在特定的行容器中，且右对齐
-    const SELECTORS = ['[data-message-role="user"]', 'div[class*="message-bubble-user"]', 'div[class*="UserMessage"]']
+    // 1. 使用 data 属性标记消息角色
+    // 2. 用户消息通常有特定的类名
+    // 3. 用户消息通常右对齐显示
+    const SELECTORS = [
+      '[data-message-role="user"]',
+      '[data-role="user"]',
+      'div[class*="user-message"]',
+      'div[class*="message-user"]',
+      'div[class*="bubble-user"]',
+      'div[class*="user-bubble"]',
+      // 尝试查找包含用户消息的通用容器
+      'section[class*="message"] div[class*="user"]',
+    ]
 
+    // 策略 A: 尝试已知的选择器
     for (const selector of SELECTORS) {
       const elements = document.querySelectorAll(selector)
       if (elements.length > 0) {
         foundElements = Array.from(elements)
+        console.log(`Doubao: Found ${foundElements.length} elements with selector: ${selector}`)
         break
       }
     }
 
-    // 启发式回退机制：通过过滤掉带有明显 AI 渲染特征的元素来定位用户消息
+    // 策略 B: 如果策略 A 失败，尝试更通用的方法
     if (foundElements.length === 0) {
-      // 豆包的对话记录通常在特定的行或者气泡中
-      // AI 回复通常带有 flow-markdown-body 和 theme-samantha-uDexJL
-      const allPossibleBubbles = document.querySelectorAll(
-        'div[class*="message"], div[class*="bubble"], div[dir="ltr"]',
+      // 查找所有可能的消息容器
+      const allMessageContainers = document.querySelectorAll(
+        'div[class*="message"], div[class*="chat"], div[class*="conversation"]',
       )
 
-      allPossibleBubbles.forEach((bubble) => {
-        // 排除掉包含 Markdown 渲染类的元素 (AI 的回复)
-        if (bubble.className && typeof bubble.className === 'string') {
+      allMessageContainers.forEach((container) => {
+        // 检查是否包含用户消息的特征
+        const className = container.className || ''
+        if (typeof className === 'string') {
+          const lowerClass = className.toLowerCase()
+          // 用户消息通常包含这些关键词
           if (
-            bubble.className.includes('flow-markdown-body') ||
-            bubble.className.includes('theme-samantha') ||
-            bubble.className.includes('mdbox-theme')
+            (lowerClass.includes('user') || lowerClass.includes('human') || lowerClass.includes('prompt')) &&
+            !lowerClass.includes('assistant') &&
+            !lowerClass.includes('bot') &&
+            !lowerClass.includes('ai') &&
+            !lowerClass.includes('model')
           ) {
-            return // 这是一个 AI 回复，跳过
-          }
-        }
-
-        // 用户消息通常是没有复杂子结构的纯文本容器
-        // 这里做一个简单的判断：如果它包含文本，且没有复杂的排版标签
-        if (bubble.textContent && !bubble.querySelector('ul, ol, li, h1, h2, h3, h4, table, pre, hr')) {
-          // 为了避免抓取到太多无用的小标签，我们可以检查它的父级或者它自身的特征
-          // 真正的用户消息气泡通常会包含一定长度的文本，并且不应该是很小的 UI 组件
-          if (bubble.innerText.trim().length > 0) {
-            // 检查是否已经被包含
-            if (!foundElements.some((el) => el.contains(bubble) || bubble.contains(el))) {
-              // 再加一层保险：检查它的祖先节点中是否包含明确是 AI 的标志
-              const isInsideAI = bubble.closest('.flow-markdown-body, [data-message-role="assistant"]')
-              if (!isInsideAI) {
-                foundElements.push(bubble)
+            // 确保不是 AI 回复的容器
+            if (
+              !container.querySelector('[class*="assistant"]') &&
+              !container.querySelector('[class*="bot"]') &&
+              !container.querySelector('[class*="ai-response"]')
+            ) {
+              // 检查是否有实际文本内容
+              if (container.textContent && container.textContent.trim().length > 0) {
+                foundElements.push(container)
               }
             }
           }
@@ -62,18 +71,86 @@ const DoubaoAdapter = {
       })
     }
 
-    // 去重并返回最外层的合适节点
-    return foundElements.filter((el, index, self) => {
-      // 如果当前节点是另一个已找到节点的子节点，则保留父节点，丢弃子节点
-      return !self.some((otherEl, otherIndex) => index !== otherIndex && otherEl.contains(el))
+    // 策略 C: 最后的回退方案 - 基于布局特征
+    if (foundElements.length === 0) {
+      // 豆包的用户消息通常是右对齐的，并且有特定的背景色
+      const allDivs = document.querySelectorAll('div')
+      allDivs.forEach((div) => {
+        const style = window.getComputedStyle(div)
+        const className = (div.className || '').toString().toLowerCase()
+
+        // 检查是否是消息气泡（有背景色、有内边距）
+        if (
+          style.backgroundColor &&
+          style.backgroundColor !== 'rgba(0, 0, 0, 0)' &&
+          style.backgroundColor !== 'transparent' &&
+          parseInt(style.padding) > 5 &&
+          div.textContent &&
+          div.textContent.trim().length > 10
+        ) {
+          // 检查是否包含用户消息的特征词
+          if (className.includes('user') || className.includes('right') || className.includes('bubble')) {
+            // 确保不是 AI 回复
+            if (
+              !className.includes('assistant') &&
+              !className.includes('bot') &&
+              !className.includes('ai') &&
+              !className.includes('markdown')
+            ) {
+              foundElements.push(div)
+            }
+          }
+        }
+      })
+    }
+
+    // 去重：移除嵌套的元素，只保留最外层的容器
+    const uniqueElements = foundElements.filter((el, index, self) => {
+      return !self.some((otherEl, otherIndex) => {
+        if (index === otherIndex) return false
+        return otherEl.contains(el)
+      })
     })
+
+    console.log(`Doubao: Total unique user messages found: ${uniqueElements.length}`)
+    return uniqueElements
   },
 
   // 从 DOM 节点中提取干净的纯文本
   extractText: (element) => {
-    // 尽量获取最内层的文本容器，避免获取到其他操作按钮
-    let text = element.innerText || element.textContent || ''
-    return text.trim()
+    if (!element) return ''
+
+    // 尝试获取最内层的文本内容，避免获取到按钮或其他 UI 元素
+    let text = ''
+
+    // 优先查找文本容器
+    const textContainers = element.querySelectorAll('p, span, div:not([class*="button"]):not([class*="icon"])')
+    if (textContainers.length > 0) {
+      // 取第一个有文本内容的元素
+      for (const container of textContainers) {
+        const containerText = container.textContent?.trim()
+        if (containerText && containerText.length > 0) {
+          text = containerText
+          break
+        }
+      }
+    }
+
+    // 如果没找到，使用整个元素的文本
+    if (!text) {
+      text = element.textContent || element.innerText || ''
+      text = text.trim()
+    }
+
+    // 清理文本：移除多余的空格和换行
+    text = text.replace(/\s+/g, ' ').trim()
+
+    // 如果文本太长，截取前200个字符作为预览
+    if (text.length > 200) {
+      text = text.substring(0, 200) + '...'
+    }
+
+    return text || null
   },
 }
 

@@ -7,6 +7,7 @@ let timelineList = null
 let tooltipElement = null
 let allMessages = []
 let currentUrl = location.href
+let isTimelineReady = false // 标记时间轴是否准备就绪
 
 // 初始化匹配适配器
 function initAdapter() {
@@ -27,9 +28,11 @@ function initAdapter() {
 function createSidebar() {
   if (document.getElementById('ai-timeline-v2-container')) return
 
-  // 1. 创建主容器
+  // 1. 创建主容器（初始隐藏）
   timelineContainer = document.createElement('div')
   timelineContainer.id = 'ai-timeline-v2-container'
+  timelineContainer.style.opacity = '0' // 初始不可见
+  timelineContainer.style.pointerEvents = 'none' // 初始不响应鼠标事件
 
   // 2. 创建列表容器
   timelineList = document.createElement('ul')
@@ -47,6 +50,16 @@ function createSidebar() {
   timelineContainer.addEventListener('mouseleave', () => {
     hideTooltip()
   })
+}
+
+// 显示时间轴（内容加载完成后调用）
+function showTimeline() {
+  if (timelineContainer && !isTimelineReady) {
+    isTimelineReady = true
+    timelineContainer.style.transition = 'opacity 0.3s ease'
+    timelineContainer.style.opacity = '1'
+    timelineContainer.style.pointerEvents = 'auto'
+  }
 }
 
 // 隐藏 Tooltip
@@ -178,6 +191,11 @@ function renderTimeline() {
 
   // 渲染后立刻更新一次激活状态
   updateActiveItem()
+
+  // 首次渲染完成后，显示时间轴
+  if (!isTimelineReady && allMessages.length > 0) {
+    showTimeline()
+  }
 }
 
 // 网页正文高亮动画
@@ -231,7 +249,12 @@ function checkUrlChange() {
     currentUrl = location.href
     console.log('URL changed, reset timeline')
     allMessages = []
+    isTimelineReady = false // 重置时间轴状态
     if (timelineList) timelineList.innerHTML = ''
+    if (timelineContainer) {
+      timelineContainer.style.opacity = '0'
+      timelineContainer.style.pointerEvents = 'none'
+    }
     hideTooltip()
     setTimeout(updateTimeline, 1000) // 等待新页面 DOM 渲染
   }
