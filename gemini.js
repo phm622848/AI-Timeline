@@ -1,6 +1,7 @@
 /**
  * Gemini 适配器
- * 负责解析 Gemini 网页版的 DOM 结构
+ * 负责解析 Google Gemini 网页版的 DOM 结构
+ * 基于 2025 年 6 月 Gemini 的 DOM 特征实现
  */
 const GeminiAdapter = {
   // 匹配 Gemini 域名的规则
@@ -10,56 +11,126 @@ const GeminiAdapter = {
   getQuestionElements: () => {
     let foundElements = []
 
-    // Gemini 常见的用户提问容器的选择器
+    console.log('Gemini: Starting DOM search for user messages...')
+
+    // Gemini 的 DOM 结构特征（多级选择器策略）
     const SELECTORS = [
-      'message-content[data-message-author-role="user"]',
-      '.user-query-container',
-      '[data-test-id="user-query"]',
-      'user-message',
+      'p.query-text-line', // 策略 1: 用户提问文本行（最新）
+      'user-query', // 策略 2: 用户查询自定义元素
+      '[data-message-role="user"]', // 策略 3: 消息角色属性
+      '[data-testid^="conversation-turn-"]', // 策略 4: 对话轮次容器
+      'user-query-node', // 策略 5: 用户查询节点
+      'div.query-text', // 策略 6: 查询文本容器
     ]
 
-    // 策略 A: 尝试已知的选择器
     for (const selector of SELECTORS) {
       const elements = document.querySelectorAll(selector)
+      console.log(`Gemini: Trying selector "${selector}" -> found ${elements.length} elements`)
+
       if (elements.length > 0) {
-        foundElements = Array.from(elements)
+        // 策略 3 特殊处理：conversation-turn 包含整轮对话，需要找到其中的 user-query 子元素
+        if (selector.includes('conversation-turn')) {
+          elements.forEach((turn) => {
+            const userQuery = turn.querySelector('user-query, [data-message-role="user"]')
+            if (userQuery) {
+              foundElements.push(userQuery)
+            } else {
+              // 如果没有 user-query 子元素，尝试找 user-query-node
+              const userQueryNode = turn.querySelector('user-query-node')
+              if (userQueryNode) {
+                foundElements.push(userQueryNode)
+              }
+            }
+          })
+        } else {
+          foundElements = Array.from(elements)
+        }
+
+        console.log(`Gemini: ✅ Successfully found ${foundElements.length} elements with selector: ${selector}`)
         break
       }
     }
 
-    // 策略 B (回退机制)
+    // 启发式回退策略：如果以上选择器都失败
     if (foundElements.length === 0) {
-      const allDivs = document.querySelectorAll('div')
-      allDivs.forEach((div) => {
-        const className = div.className
-        if (typeof className === 'string') {
-          const lowerClass = className.toLowerCase()
-          if (
-            lowerClass.includes('user') &&
-            (lowerClass.includes('query') || lowerClass.includes('message') || lowerClass.includes('prompt'))
-          ) {
-            if (div.children.length === 0 || div.innerText.length > 0) {
-              foundElements.push(div)
-            }
+      console.log('Gemini: All selectors failed, trying heuristic fallback...')
+      const allTurns = document.querySelectorAll('[data-testid^="conversation-turn-"]')
+      allTurns.forEach((turn) => {
+        // 检查是否包含用户消息特征
+        const text = turn.innerText || ''
+        if (text.trim().length > 0 && text.trim().length < 2000) {
+          // 排除 AI 回复（通常包含特定类名或结构）
+          if (!turn.querySelector('[class*="assistant"]') && !turn.querySelector('[class*="model-response"]')) {
+            foundElements.push(turn)
           }
         }
       })
+      console.log(`Gemini: Heuristic fallback found ${foundElements.length} elements`)
     }
 
-    return foundElements
+    if (foundElements.length === 0) {
+      console.warn('Gemini: ⚠️ No user message elements found!')
+      console.log('Gemini: Current URL:', location.href)
+      console.log('Gemini: Body classes:', document.body.className)
+    }
+
+    // 去重：移除嵌套的元素，只保留最内层的容器
+    const uniqueElements = foundElements.filter((el, index, self) => {
+      return !self.some((otherEl, otherIndex) => {
+        if (index === otherIndex) return false
+        return otherEl.contains(el) && otherEl !== el
+      })
+    })
+
+    console.log(`Gemini: Total unique user messages: ${uniqueElements.length}`)
+    return uniqueElements
   },
 
-  // 从 DOM 节点中提取干净的纯文本，去除特有前缀
+  // 从 DOM 节点中提取干净的纯文本
   extractText: (element) => {
-    let text = element.innerText || element.textContent || ''
-    text = text.trim()
-    if (!text) return null
+    if (!element) return ''
 
-    // Gemini 特色处理：去掉开头的 "你说" 或 "You said" 等无用前缀（可能包含换行）
-    let cleanText = text.replace(/^(你说|You said)[\s\S]*?\n/i, '').trim()
-    if (!cleanText || cleanText === '你说' || cleanText === 'You said') return null
+    let text = ''
 
-    return cleanText
+    // 尝试处理 Shadow DOM（Gemini 可能使用 Shadow DOM 封装）
+    if (element.shadowRoot) {
+      const shadowText = element.shadowRoot.innerText
+      if (shadowText && shadowText.trim()) {
+        text = shadowText.trim()
+      }
+    }
+
+    // 如果 Shadow DOM 没有内容，使用常规提取
+    if (!text) {
+      // 对于 p.query-text-line 元素，直接提取文本
+      // 对于外层容器，查找内部的 query-text-line 子元素
+      if (element.tagName.toLowerCase() !== 'p' || !element.classList.contains('query-text-line')) {
+        const childQuery = element.querySelector('p.query-text-line, user-query, user-query-node, div.query-text')
+        if (childQuery && childQuery !== element) {
+          // 如果找到更内层的用户消息元素，说明当前元素是外层容器，返回 null 跳过
+          return null
+        }
+      }
+
+      text = element.innerText || element.textContent || ''
+      text = text.trim()
+    }
+
+    // 清理文本：移除 "You:" 或 "你：" 前缀
+    text = text.replace(/^(You:\s*|你[说道]：\s*)/i, '').trim()
+
+    // 清理多余空白和换行
+    text = text.replace(/\s+/g, ' ').trim()
+
+    // 如果文本为空或过短，返回 null
+    if (text.length < 2) return null
+
+    // 如果文本太长，截取前 200 个字符作为预览
+    if (text.length > 200) {
+      text = text.substring(0, 200) + '...'
+    }
+
+    return text
   },
 }
 

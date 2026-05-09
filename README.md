@@ -16,9 +16,10 @@ When engaging in long, multi-turn conversations with AI, it's often frustrating 
 
 - **Auto-generated Timeline**: Automatically extracts user prompts and renders them in a neat sidebar list.
 - **Smooth Navigation**: Click on any item in the timeline to smoothly scroll to the exact position of the conversation, complete with a highlighting animation.
-- **Real-time Search**: Built-in search bar supports fuzzy matching, making it incredibly fast to locate specific topics within massive chat histories.
-- **Multi-Platform Support**: Built with an adapter architecture, currently supporting **Google Gemini**, **ChatGPT**, and **DeepSeek**. (Highly extensible for future additions).
-- **Theme Adaptability**: Seamlessly switches between Light and Dark modes, either following your system settings or toggling manually.
+- **Multi-Platform Support**: Built with an adapter architecture, currently supporting **Google Gemini**, **ChatGPT**, **DeepSeek**, and **Doubao**.
+- **Minimalist Hover UI**: Default shows only timeline dashes; hover to expand and view full text with tooltip support.
+- **Active Tracking**: Automatically highlights the current conversation item based on scroll position.
+- **Superset Message Filtering**: Intelligent DOM filtering prevents nested message containers from merging multiple prompts.
 
 ### 🚀 How to Install (Developer Mode)
 
@@ -42,9 +43,10 @@ When engaging in long, multi-turn conversations with AI, it's often frustrating 
 
 - **自动生成时间轴**：无感扫描网页 DOM，精准提取用户提问正文并渲染为侧边栏列表。
 - **锚点平滑跳转**：点击时间轴上的任意一条记录，页面将平滑滚动至原消息处，并附带短暂的背景高亮动画，视觉反馈清晰。
-- **实时模糊搜索**：内置搜索框，支持实时输入过滤，在海量聊天记录中秒寻历史话题。
-- **多平台适配架构**：采用高内聚低耦合的适配器（Adapter）架构设计。目前已原生支持 **Google Gemini**、**ChatGPT** 以及 **DeepSeek**（极易扩展其他 AI 平台）。
-- **暗黑模式兼容**：完美支持 Light/Dark 模式，可跟随系统或手动一键强制切换，保护视力。
+- **多平台适配架构**：采用高内聚低耦合的适配器（Adapter）架构设计。目前已原生支持 **Google Gemini**、**ChatGPT**、**DeepSeek** 以及 **豆包**。
+- **极简悬停 UI**：默认只显示时间轴横线，鼠标悬停展开显示完整文字，支持 Tooltip 气泡提示。
+- **智能滚动追踪**：根据页面滚动位置自动高亮当前正在阅读的对话项。
+- **超集消息过滤**：智能 DOM 过滤机制，防止嵌套容器导致多条消息合并显示。
 
 ### 🚀 安装指南 (开发者模式)
 
