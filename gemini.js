@@ -11,8 +11,6 @@ const GeminiAdapter = {
   getQuestionElements: () => {
     let foundElements = []
 
-    console.log('Gemini: Starting DOM search for user messages...')
-
     // Gemini 的 DOM 结构特征（多级选择器策略）
     const SELECTORS = [
       'p.query-text-line', // 策略 1: 用户提问文本行（最新）
@@ -25,8 +23,7 @@ const GeminiAdapter = {
 
     for (const selector of SELECTORS) {
       const elements = document.querySelectorAll(selector)
-      console.log(`Gemini: Trying selector "${selector}" -> found ${elements.length} elements`)
-
+          
       if (elements.length > 0) {
         // 策略 3 特殊处理：conversation-turn 包含整轮对话，需要找到其中的 user-query 子元素
         if (selector.includes('conversation-turn')) {
@@ -46,14 +43,12 @@ const GeminiAdapter = {
           foundElements = Array.from(elements)
         }
 
-        console.log(`Gemini: ✅ Successfully found ${foundElements.length} elements with selector: ${selector}`)
         break
       }
     }
 
     // 启发式回退策略：如果以上选择器都失败
     if (foundElements.length === 0) {
-      console.log('Gemini: All selectors failed, trying heuristic fallback...')
       const allTurns = document.querySelectorAll('[data-testid^="conversation-turn-"]')
       allTurns.forEach((turn) => {
         // 检查是否包含用户消息特征
@@ -65,13 +60,6 @@ const GeminiAdapter = {
           }
         }
       })
-      console.log(`Gemini: Heuristic fallback found ${foundElements.length} elements`)
-    }
-
-    if (foundElements.length === 0) {
-      console.warn('Gemini: ⚠️ No user message elements found!')
-      console.log('Gemini: Current URL:', location.href)
-      console.log('Gemini: Body classes:', document.body.className)
     }
 
     // 去重：移除嵌套的元素，只保留最内层的容器
@@ -82,7 +70,6 @@ const GeminiAdapter = {
       })
     })
 
-    console.log(`Gemini: Total unique user messages: ${uniqueElements.length}`)
     return uniqueElements
   },
 

@@ -30,7 +30,6 @@ const DoubaoAdapter = {
       const elements = document.querySelectorAll(selector)
       if (elements.length > 0) {
         foundElements = Array.from(elements)
-        console.log(`Doubao: Found ${foundElements.length} elements with selector: ${selector}`)
         break
       }
     }
@@ -112,7 +111,6 @@ const DoubaoAdapter = {
       })
     })
 
-    console.log(`Doubao: Total unique user messages found: ${uniqueElements.length}`)
     return uniqueElements
   },
 

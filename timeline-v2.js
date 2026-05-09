@@ -1,5 +1,4 @@
 // timeline-v2.js
-console.log('AI Timeline V2 Extension loaded.')
 
 let currentAdapter = null
 let timelineContainer = null
@@ -12,19 +11,13 @@ let isTimelineReady = false // 标记时间轴是否准备就绪
 // 初始化匹配适配器
 function initAdapter() {
   if (window.TimelineAdapters && window.TimelineAdapters.length > 0) {
-    console.log('Timeline: Checking', window.TimelineAdapters.length, 'adapters...')
     for (const adapter of window.TimelineAdapters) {
-      const adapterName = adapter.constructor?.name || 'Unknown'
-      const matchResult = adapter.match()
-      console.log(`Timeline: Adapter "${adapterName}" match() =`, matchResult)
-      if (matchResult) {
+      if (adapter.match()) {
         currentAdapter = adapter
-        console.log('Timeline: ✅ Matched adapter:', adapterName)
         return true
       }
     }
   }
-  console.log('Timeline: ❌ No suitable adapter found for this website.')
   return false
 }
 
@@ -59,7 +52,6 @@ function createSidebar() {
 // 显示时间轴（内容加载完成后调用）
 function showTimeline() {
   if (timelineContainer && !isTimelineReady) {
-    console.log('Timeline: Showing timeline container')
     isTimelineReady = true
     timelineContainer.style.transition = 'opacity 0.3s ease'
     timelineContainer.style.opacity = '1'
@@ -138,7 +130,6 @@ function removeSupersetMessages(messages) {
   }
 
   if (toRemove.size > 0) {
-    console.log(`Timeline: Filtered ${toRemove.size} superset message(s)`)
     return messages.filter((_, index) => !toRemove.has(index))
   }
 
@@ -147,19 +138,12 @@ function removeSupersetMessages(messages) {
 
 // 提取并更新时间轴
 function updateTimeline() {
-  if (!currentAdapter) {
-    console.warn('Timeline: No adapter matched!')
-    return
-  }
-
-  console.log('Timeline: Updating with adapter:', currentAdapter.constructor.name || 'Unknown')
+  if (!currentAdapter) return
 
   const elements = currentAdapter.getQuestionElements()
-  console.log(`Timeline: Found ${elements.length} question elements`)
-
+  
   if (elements.length === 0) {
-    console.log('Timeline: No elements found, but showing container anyway for debugging')
-    // 即使没有元素，也显示时间轴容器（用于调试）
+    // 即使没有元素，也显示时间轴容器
     showTimeline()
     return
   }
@@ -190,22 +174,16 @@ function updateTimeline() {
   // 按照 DOM 在页面中的物理位置从上到下排序
   newMessages.sort((a, b) => a.top - b.top)
 
-  console.log(`Timeline: Before superset filter: ${newMessages.length} messages`)
-
   // 应用超集过滤，移除外层容器导致的合并消息
   newMessages = removeSupersetMessages(newMessages)
-
-  console.log(`Timeline: After superset filter: ${newMessages.length} messages`)
 
   // 如果消息数量发生变化，或者内容不一致，则重新渲染
   if (newMessages.length !== allMessages.length) {
     hasNewMessages = true
-    console.log(`Timeline: Message count changed (${allMessages.length} -> ${newMessages.length})`)
   } else {
     for (let i = 0; i < newMessages.length; i++) {
       if (newMessages[i].text !== allMessages[i].text || newMessages[i].element !== allMessages[i].element) {
         hasNewMessages = true
-        console.log(`Timeline: Message content changed at index ${i}`)
         break
       }
     }
@@ -213,20 +191,14 @@ function updateTimeline() {
 
   if (hasNewMessages) {
     allMessages = newMessages
-    console.log(`Timeline: Rendering ${allMessages.length} messages`)
     renderTimeline()
   }
 }
 
 // 渲染时间轴列表
 function renderTimeline() {
-  console.log(`renderTimeline: Called with ${allMessages.length} messages`)
-
-  if (!timelineList) {
-    console.error('renderTimeline: timelineList is null!')
-    return
-  }
-
+  if (!timelineList) return
+  
   timelineList.innerHTML = ''
 
   allMessages.forEach((msg, index) => {
@@ -266,9 +238,8 @@ function renderTimeline() {
   // 渲染后立刻更新一次激活状态
   updateActiveItem()
 
-  // 首次渲染完成后，显示时间轴（即使没有消息也要显示，用于调试）
+  // 首次渲染完成后，显示时间轴
   if (!isTimelineReady) {
-    console.log('renderTimeline: Calling showTimeline() for the first time')
     showTimeline()
   }
 }
@@ -322,7 +293,6 @@ function updateActiveItem() {
 function checkUrlChange() {
   if (location.href !== currentUrl) {
     currentUrl = location.href
-    console.log('URL changed, reset timeline')
     allMessages = []
     isTimelineReady = false // 重置时间轴状态
     if (timelineList) timelineList.innerHTML = ''
@@ -337,34 +307,21 @@ function checkUrlChange() {
 
 // 启动插件逻辑
 function start() {
-  console.log('Timeline V2: Starting...')
-  console.log('Timeline V2: Current hostname:', location.hostname)
-  console.log('Timeline V2: Available adapters:', window.TimelineAdapters?.length || 0)
-
   if (!initAdapter()) {
-    console.warn('Timeline V2: No adapter matched on first try, retrying in 3s...')
     // 如果没有匹配到，延迟一会再试，有些网站 DOM 加载较慢
     setTimeout(() => {
-      console.log('Timeline V2: Retrying adapter match...')
       if (initAdapter()) {
-        console.log('Timeline V2: Adapter matched on retry')
         createSidebar()
         setInterval(updateTimeline, 2000)
-      } else {
-        console.error('Timeline V2: Still no adapter matched after retry!')
       }
     }, 3000)
     return
   }
 
-  console.log('Timeline V2: Creating sidebar...')
   createSidebar()
 
   // 初次提取
-  setTimeout(() => {
-    console.log('Timeline V2: Running initial update...')
-    updateTimeline()
-  }, 1000)
+  setTimeout(updateTimeline, 1000)
 
   // 定时提取，适应动态加载的对话
   setInterval(updateTimeline, 2000)
